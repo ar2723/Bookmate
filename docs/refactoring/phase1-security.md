@@ -113,4 +113,5 @@ MockMvc의 `csrf()`는 토큰 저장소를 테스트용으로 바꿔 끼우기 �
 - 네이버 로그인(`/users/socialaccess`)은 세션에 `id`만 넣어서 Security 인증이 되지 않는다. 기능 자체를 다시 설계할 때 OAuth2 Client로 교체한다.
 - ~~`UsersServiceImpl`이 `new BCryptPasswordEncoder()`를 직접 생성~~ → `PasswordEncoder` 빈 주입으로 교체 완료(2026-11-14). `isSamePwd`의 `BCrypt.checkpw`도 `matches`로 바꿔, 해시가 아닌 값(소셜 회원의 빈 비밀번호)이 오면 예외 대신 `false`를 돌려준다.
 - **리소스 단위 권한 누락**: `/test/bookUpdate`, `/test/bookDelete`(모임 책 목록 수정)에 모임장 검사가 없어서 로그인한 사용자 누구나 다른 모임의 책 목록을 바꿀 수 있다. Phase 2에서 소유자 검사를 서비스 계층으로 모을 때 함께 처리한다.
+- ~~업로드 이미지 조회 3곳(`/users/images`, `/group/images`, `/editor/images`)이 파일명을 경로에 그대로 이어 붙임~~ → `security/UploadImageReader`로 모아 교체 완료(2026-11-27). 이름을 업로드 폴더 기준으로 풀어 폴더 밖이거나 없는 파일이면 404를 돌려준다(예전에는 없는 파일이 500). 저장 이름에 원래 파일명(한글 포함)이 들어가서 문자 종류는 제한하지 않고 경로만 검사한다. 스트림을 닫지 않던 문제도 함께 없어졌다. 검증은 `UploadImageReaderTest`.
 - `test/test.jsp`는 EUC-KR 인코딩의 테스트 페이지라 csrf.js 적용에서 뺐다(폼 없음). Phase 2에서 `test/` 화면 정리 시 삭제 검토.

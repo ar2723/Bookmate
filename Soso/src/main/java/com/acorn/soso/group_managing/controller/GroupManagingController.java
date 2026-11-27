@@ -32,13 +32,14 @@ import com.acorn.soso.group.service.GroupService;
 import com.acorn.soso.group_managing.dao.GroupManagingDao;
 import com.acorn.soso.group_managing.dto.GroupManagingDto;
 import com.acorn.soso.group_managing.service.GroupManagingService;
+import com.acorn.soso.security.UploadImageReader;
 
 @Controller
 public class GroupManagingController {
 	
-	@Value("${file.location}")
-	private String fileLocation;
-	
+	@Autowired
+	private UploadImageReader uploadImageReader;
+
 	@Autowired
 	GroupManagingService service;
 	@Autowired
@@ -137,12 +138,9 @@ public class GroupManagingController {
 	)
 	@ResponseBody
 	public byte[] groupImage(@PathVariable("imageName") String imageName) throws IOException {
-		String absolutePath = fileLocation + File.separator + imageName;
-		// 파일에서 읽어들일 InputStream
-		InputStream is = new FileInputStream(absolutePath);
-		// 이미지 데이터 (byte)를 읽어서 배열에 담아서 클라이언트에게 응답한다.
-		return IOUtils.toByteArray(is);
-	}	
+		// 업로드 폴더 밖을 가리키거나 없는 파일이면 404
+		return uploadImageReader.read(imageName);
+	}
 	
 	@PostMapping("/group_managing/group_update")
 	public String group_update(GroupDto dto, HttpServletRequest request, HttpSession session) {

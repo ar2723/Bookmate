@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.acorn.soso.naverLogin.NaverService;
 import com.acorn.soso.security.LegacySession;
+import com.acorn.soso.security.UploadImageReader;
 import com.acorn.soso.users.dto.UsersDto;
 import com.acorn.soso.users.service.UsersService;
 
@@ -38,9 +39,9 @@ public class UsersController {
 	@Autowired
 	private NaverService naverservice;
 	
-	@Value("${file.location}")
-	private String fileLocation;
-	
+	@Autowired
+	private UploadImageReader uploadImageReader;
+
 	@GetMapping("/users/signup_form")
 	public String signupForm() {
 		
@@ -144,12 +145,9 @@ public class UsersController {
 	)
 	@ResponseBody
 	public byte[] profileImage(@PathVariable("imageName") String imageName) throws IOException {
-		String absolutePath = fileLocation + File.separator + imageName;
-		// 파일에서 읽어들일 InputStream
-		InputStream is = new FileInputStream(absolutePath);
-		// 이미지 데이터 (byte)를 읽어서 배열에 담아서 클라이언트에게 응답한다.
-		return IOUtils.toByteArray(is);
-	}	
+		// 업로드 폴더 밖을 가리키거나 없는 파일이면 404
+		return uploadImageReader.read(imageName);
+	}
 	//개인정보 수정 요청 처리
 	@PostMapping("/users/update")
 	public String update(UsersDto dto, HttpSession session) {

@@ -30,7 +30,7 @@ model: sonnet
    | 변경 경로 | 실행할 테스트 |
    |---|---|
    | `pom.xml`, `application*.properties`, `db/migration/**`, `SosoApplication.java`, `support/OracleIntegrationTest.java` | **전체** (`./mvnw test`) |
-   | `security/**`, `config/WebConfig.java`, `interceptor/**`, `exception/**`, `resources/js/csrf.js`, `HomeController.java` | `AccessRulesTest,LoginTest,CsrfTest,CsrfCookieHttpTest,PasswordReauthTest,RedirectLocationHttpTest,GroupDeleteSecurityTest` |
+   | `security/**`, `config/WebConfig.java`, `interceptor/**`, `exception/**`, `resources/js/csrf.js`, `HomeController.java`, `SmartEditorController.java` | `AccessRulesTest,LoginTest,CsrfTest,CsrfCookieHttpTest,PasswordReauthTest,RedirectLocationHttpTest,GroupDeleteSecurityTest,UploadImageReaderTest` |
    | `users/**`, `users_info/**`, `UsersMapper.xml`, `UsersInfoMapper.xml` | `UsersDaoTest,LoginTest,PasswordReauthTest` |
    | `group/**`, `group_managing/**`, `Group*Mapper.xml`, `GroupFAQmapper.xml`, `JoinMapper.xml`, `JjimMapper.xml` | `GroupJoinFlowTest,GroupDeleteSecurityTest` |
    | `support/**`(main), `mapper/support/**` | `FaqCategoryTest,AccessRulesTest` |

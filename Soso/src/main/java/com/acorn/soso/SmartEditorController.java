@@ -12,6 +12,7 @@ import java.util.UUID;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.acorn.soso.security.UploadImageReader;
 
 /**
  * @apiNote
@@ -41,7 +44,10 @@ public class SmartEditorController {
 	//업로드된 이미지를 저장할 서버의 경로 읽어오기
 	@Value("${file.location}")
 	private String fileLocation;
-	
+
+	@Autowired
+	private UploadImageReader uploadImageReader;
+
 	//ajax 업로드 요청에 대해 응답을 하는 컨트롤러 메소드
 	@RequestMapping("/editor_upload")
 	@ResponseBody
@@ -115,10 +121,7 @@ public class SmartEditorController {
 	@GetMapping(value = "/editor/images/{imageName}", produces = {MediaType.IMAGE_GIF_VALUE,  MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
 	@ResponseBody
 	public byte[] editorImage(@PathVariable("imageName") String imageName) throws IOException {
-		String absolutePath = fileLocation + File.separator + imageName;
-		// 파일에서 읽어들일 InputStream
-		InputStream is = new FileInputStream(absolutePath);
-		// 이미지 데이터 (byte)를 읽어서 배열에 담아서 클라이언트에게 응답한다.
-		return IOUtils.toByteArray(is);
+		// 업로드 폴더 밖을 가리키거나 없는 파일이면 404
+		return uploadImageReader.read(imageName);
 	}
 }
