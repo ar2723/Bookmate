@@ -3,6 +3,7 @@
 # 북메이트 | Bookmate
 
 [![Bookmate Web](https://img.shields.io/badge/Bookmate%20Web-D5BC9E?&style=for-the-badge)](https://bookmate.p-e.kr)
+[![Portfolio](https://img.shields.io/badge/Portfolio-1D5C8C?&style=for-the-badge)](https://ar2723.github.io)
 
 ## 프로젝트 소개
 > 북메이트는 독서 소모임에 참여하려는 사용자들에게 독서모임을 맺을 수 있는 장소를 제공하는 웹 사이트입니다.
