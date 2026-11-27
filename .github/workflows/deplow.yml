@@ -28,7 +28,7 @@ jobs:
 
       # 빌드된 War 파일을 미니 PC로 전송
       - name: Copy War to Server
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
@@ -40,7 +40,7 @@ jobs:
 
       # 미니 PC에서 배포 스크립트 실행
       - name: Execute Remote SSH commands
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
