@@ -32,7 +32,7 @@ $firstLine = ($cmd -split "`r?`n")[0]
 $brief = $firstLine.Substring(0, [Math]::Min(100, $firstLine.Length))
 
 # 명령의 시작이나 ; && || | ( 뒤에 오는 git 만 본다(문자열 안의 "git push" 오탐 방지).
-$GIT = '(?:^|[;&|(])\s*git(?:\s+-[cC]\s+\S+)*\s+'
+$GIT = '(?m)(?:^|[;&|(])\s*git(?:\s+-[cC]\s+\S+)*\s+'
 $isCommit = ($cmd -match ($GIT + 'commit\b')) -and ($cmd -notmatch '--dry-run')
 $pushMatch = [regex]::Match($cmd, $GIT + 'push\b([^;&|]*)')
 $pushRest = if ($pushMatch.Success) { $pushMatch.Groups[1].Value } else { '' }
@@ -43,7 +43,7 @@ if (-not $isCommit -and -not $isPush) {
 }
 
 # 명령 안에서 cd 로 다른 저장소에 들어가 git 을 돌린 경우는 이 프로젝트 일이 아니므로 건너뛴다.
-$cdMatches = [regex]::Matches($cmd, '(?:^|[;&|(])\s*(?:cd|Set-Location)\s+("[^"]+"|''[^'']+''|[^\s;&|]+)')
+$cdMatches = [regex]::Matches($cmd, '(?m)(?:^|[;&|(])\s*(?:cd|Set-Location)\s+("[^"]+"|''[^'']+''|[^\s;&|]+)')
 if ($cdMatches.Count -gt 0) {
   $target = $cdMatches[$cdMatches.Count - 1].Groups[1].Value.Trim('"', "'")
   if ($target -match '^/([a-zA-Z])/(.*)$') { $target = "$($Matches[1]):/$($Matches[2])" }
