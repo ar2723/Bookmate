@@ -42,6 +42,19 @@ if (-not $isCommit -and -not $isPush) {
   exit 0
 }
 
+# 명령 안에서 cd 로 다른 저장소에 들어가 git 을 돌린 경우는 이 프로젝트 일이 아니므로 건너뛴다.
+$cdMatches = [regex]::Matches($cmd, '(?:^|[;&|(])\s*(?:cd|Set-Location)\s+("[^"]+"|''[^'']+''|[^\s;&|]+)')
+if ($cdMatches.Count -gt 0) {
+  $target = $cdMatches[$cdMatches.Count - 1].Groups[1].Value.Trim('"', "'")
+  if ($target -match '^/([a-zA-Z])/(.*)$') { $target = "$($Matches[1]):/$($Matches[2])" }
+  $targetTop = try { ((& git -C $target rev-parse --show-toplevel 2>$null) -join '').Trim() } catch { '' }
+  $projectTop = Invoke-HookGit @('rev-parse', '--show-toplevel')
+  if ($targetTop -and $projectTop -and ($targetTop -ne $projectTop)) {
+    Write-HookLog "[$tool] 다른 저장소($targetTop): $brief"
+    exit 0
+  }
+}
+
 $branch = Invoke-HookGit @('rev-parse', '--abbrev-ref', 'HEAD')
 $head = Invoke-HookGit @('rev-parse', '--short', 'HEAD')
 $messages = @()
