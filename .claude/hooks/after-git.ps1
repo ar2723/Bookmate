@@ -42,23 +42,34 @@ if (-not $isCommit -and -not $isPush) {
   exit 0
 }
 
-# 명령 안에서 cd 로 다른 저장소에 들어가 git 을 돌린 경우는 이 프로젝트 일이 아니므로 건너뛴다.
-$cdMatches = [regex]::Matches($cmd, '(?m)(?:^|[;&|(])\s*(?:cd|Set-Location)\s+("[^"]+"|''[^'']+''|[^\s;&|]+)')
-if ($cdMatches.Count -gt 0) {
-  $target = $cdMatches[$cdMatches.Count - 1].Groups[1].Value.Trim('"', "'")
+# 명령 안에서 cd 로 다른 저장소에 들어가거나 git -C <경로>로 다른 저장소를 가리킨 경우는
+# 이 프로젝트 일이 아니므로 건너뛴다. 경로를 확인하지 못해도 이 프로젝트로 단정하지 않는다.
+function Resolve-HookTarget([string]$raw) {
+  $t = $raw.Trim('"', "'")
   # 같은 명령 안의 NAME=값 대입을 찾아 $NAME / ${NAME} 을 펼친다(예: R=/c/...; cd "$R").
   foreach ($m in [regex]::Matches($cmd, '(?m)(?:^|[;&|(\s])([A-Za-z_][A-Za-z0-9_]*)=("[^"]*"|''[^'']*''|[^\s;&|]+)')) {
     $name = $m.Groups[1].Value; $val = $m.Groups[2].Value.Trim('"', "'")
-    $target = $target.Replace('${' + $name + '}', $val).Replace('$' + $name, $val)
+    $t = $t.Replace('${' + $name + '}', $val).Replace('$' + $name, $val)
   }
-  if ($target -match '^/([a-zA-Z])/(.*)$') { $target = "$($Matches[1]):/$($Matches[2])" }
-  $targetTop = try { ((& git -C $target rev-parse --show-toplevel 2>$null) -join '').Trim() } catch { '' }
+  $t = $t.Replace('$HOME', $HOME).Replace('${HOME}', $HOME)
+  if ($t -match '^~(.*)$') { $t = $HOME + $Matches[1] }
+  if ($t -match '^/([a-zA-Z])/(.*)$') { $t = "$($Matches[1]):/$($Matches[2])" }
+  $top = try { ((& git -C $t rev-parse --show-toplevel 2>$null) -join '').Trim() } catch { '' }
+  return @($t, $top)
+}
+$targets = @()
+$cdMatches = [regex]::Matches($cmd, '(?m)(?:^|[;&|(])\s*(?:cd|Set-Location)\s+("[^"]+"|''[^'']+''|[^\s;&|]+)')
+if ($cdMatches.Count -gt 0) { $targets += $cdMatches[$cdMatches.Count - 1].Groups[1].Value }
+foreach ($m in [regex]::Matches($cmd, '\bgit\s+-C\s+("[^"]+"|''[^'']+''|[^\s;&|]+)')) { $targets += $m.Groups[1].Value }
+if ($targets.Count -gt 0) {
   $projectTop = Invoke-HookGit @('rev-parse', '--show-toplevel')
-  # 경로를 확인하지 못했거나 다른 저장소면, 이 프로젝트의 커밋·push 로 단정하지 않고 건너뛴다.
-  if ($projectTop -and ($targetTop -ne $projectTop)) {
-    $where = if ($targetTop) { $targetTop } else { "확인 불가: $target" }
-    Write-HookLog "[$tool] 다른 저장소($where): $brief"
-    exit 0
+  foreach ($raw in $targets) {
+    $resolved = Resolve-HookTarget $raw
+    if ($projectTop -and ($resolved[1] -ne $projectTop)) {
+      $where = if ($resolved[1]) { $resolved[1] } else { "확인 불가: $($resolved[0])" }
+      Write-HookLog "[$tool] 다른 저장소($where): $brief"
+      exit 0
+    }
   }
 }
 
