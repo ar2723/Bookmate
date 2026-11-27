@@ -54,13 +54,20 @@ function Resolve-HookTarget([string]$raw) {
   $t = $t.Replace('$HOME', $HOME).Replace('${HOME}', $HOME)
   if ($t -match '^~(.*)$') { $t = $HOME + $Matches[1] }
   if ($t -match '^/([a-zA-Z])/(.*)$') { $t = "$($Matches[1]):/$($Matches[2])" }
+  # 상대 경로(cd .., cd Soso)는 훅의 작업 폴더가 아니라 명령이 실행된 폴더(cwd) 기준으로 푼다.
+  if (-not [IO.Path]::IsPathRooted($t)) { $t = Join-Path $shellCwd $t }
   $top = try { ((& git -C $t rev-parse --show-toplevel 2>$null) -join '').Trim() } catch { '' }
   return @($t, $top)
 }
+# 명령이 실행된 폴더. 훅 입력의 cwd가 없으면 프로젝트 폴더로 본다.
+$shellCwd = if ($hookInput.cwd) { [string]$hookInput.cwd } else { $repo }
+if ($shellCwd -match '^/([a-zA-Z])/(.*)$') { $shellCwd = "$($Matches[1]):/$($Matches[2])" }
 $targets = @()
 $cdMatches = [regex]::Matches($cmd, '(?m)(?:^|[;&|(])\s*(?:cd|Set-Location)\s+("[^"]+"|''[^'']+''|[^\s;&|]+)')
 if ($cdMatches.Count -gt 0) { $targets += $cdMatches[$cdMatches.Count - 1].Groups[1].Value }
 foreach ($m in [regex]::Matches($cmd, '\bgit\s+-C\s+("[^"]+"|''[^'']+''|[^\s;&|]+)')) { $targets += $m.Groups[1].Value }
+# cd도 -C도 없으면 명령이 실행된 폴더 자체가 대상이다(쉘이 이미 다른 저장소에 있을 수 있음).
+if ($targets.Count -eq 0) { $targets += '.' }
 if ($targets.Count -gt 0) {
   $projectTop = Invoke-HookGit @('rev-parse', '--show-toplevel')
   foreach ($raw in $targets) {
